@@ -261,20 +261,4 @@ def deterministic_local_search(list_rules, df, Y, lambda_array, epsilon):
             
 
 
-# input data and function calls 
-df = pd.read_csv('titanic_train.tab',' ', header=None, names=['Passenger_Cat', 'Age_Cat', 'Gender'])
-df1 = pd.read_csv('titanic_train.Y', ' ', header=None, names=['Died', 'Survived'])
-Y = list(df1['Died'].values)
-
-itemsets = run_apriori(df, 0.1)
-list_of_rules = createrules(itemsets, list(set(Y)))
-print("----------------------")
-for r in list_of_rules:
-    r.print_rule()
-
-lambda_array = [0.5]*7     # use separate hyperparamter search routine
-epsilon = 0.05
-soln_set, obj_val = deterministic_local_search(list_of_rules, df, Y, lambda_array, epsilon)
-print(soln_set)
-print(obj_val)
-
+# input data and function calls

@@ -25,15 +25,18 @@ class rule:
             return
         for i in range(0,len(feature_list)):
             self.itemset.add((feature_list[i],value_list[i]))
-    
-    def print_rule(self):
+
+    def __str__(self):
         s = "If "
         for item in self.itemset:
-            s += str(item[0]) + " == " +str(item[1]) + " and "
+            s += str(item[0]) + " == " + str(item[1]) + " and "
         s = s[:-5]
         s += ", then "
         s += str(self.class_label)
-        print(s)
+        return s
+
+    def print_rule(self):
+        print(str(self))
         
     def all_predicates_same(self, r):
         return self.itemset == r.itemset
@@ -72,6 +75,7 @@ class rule:
 def run_apriori(df, support_thres):
     # the idea is to basically make a list of strings out of df and run apriori api on it 
     # return the frequent itemsets
+    df = df.reset_index(drop=True)
     dataset = []
     for i in range(0,df.shape[0]):
         temp = []
@@ -289,7 +293,7 @@ def smooth_local_search(list_rules, df, Y, lambda_array, delta, delta_prime):
             omega_estimates.append(omega_est)
             print("Omega estimate is "+str(omega_est))
             
-             if rule_x_index in soln_set:
+            if rule_x_index in soln_set:
                 continue
             
             if omega_est > 2.0/(n*n) * OPT:
@@ -301,48 +305,23 @@ def smooth_local_search(list_rules, df, Y, lambda_array, delta, delta_prime):
                 print("-----------------------")
                 break    
         
-        if restart_omega_computations: 
-            restart_omega_computations = False
-            continue
-            
-        # reaching this point of code means there is nothing more to add to the solution set, but we can remove elements
-        for rule_ind in soln_set:
-            if omega_estimates[rule_ind] < -2.0/(n*n) * OPT:
-                soln_set.remove(rule_ind)
-                restart_omega_computations = True
-                
-                print("Removing from the solution set rule "+str(rule_ind))
-                break
-                
-        if restart_omega_computations: 
-            restart_omega_computations = False
-            continue
-            
+            if restart_omega_computations:
+                restart_omega_computations = False
+                continue
+
+            # reaching this point of code means there is nothing more to add to the solution set, but we can remove elements
+            for rule_ind in soln_set:
+                if omega_estimates[rule_ind] < -2.0/(n*n) * OPT:
+                    soln_set.remove(rule_ind)
+                    restart_omega_computations = True
+
+                    print("Removing from the solution set rule "+str(rule_ind))
+                    break
+
+            if restart_omega_computations:
+                restart_omega_computations = False
+                continue
+
         # reaching here means there is no element to add or remove from the solution set
         return sample_random_set(soln_set, delta_prime, n)
-
-
-# input data and function calls 
-
-df = pd.read_csv('titanic_train.tab',' ', header=None, names=['Passenger_Cat', 'Age_Cat', 'Gender'])
-df1 = pd.read_csv('titanic_train.Y', ' ', header=None, names=['Died', 'Survived'])
-Y = list(df1['Died'].values)
-df1.head()
-
-
-itemsets = run_apriori(df, 0.2)
-list_of_rules = createrules(itemsets, list(set(Y)))
-print("----------------------")
-for r in list_of_rules:
-    r.print_rule()
-
-lambda_array = [1.0]*7     # use separate hyperparamter search routine
-s1 = smooth_local_search(list_of_rules, df, Y, lambda_array, 0.33, 0.33)
-s2 = smooth_local_search(list_of_rules, df, Y, lambda_array, 0.33, -1.0)
-f1 = func_evaluation(s1, list_of_rules, df, Y, lambda_array)
-f2 = func_evaluation(s2, list_of_rules, df, Y, lambda_array)
-if f1 > f2:
-    print("The Solution Set is: "+str(s1))
-else:
-    print("The Solution Set is: "+str(s2))
 
